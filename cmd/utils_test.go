@@ -3,10 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
-	"syscall"
 	"testing"
 
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
@@ -1007,22 +1004,7 @@ func terminalTestCases() map[string]terminalCase {
 			r.Close()
 			return w
 		}},
-		"named pipe (FIFO)": {isTerm: false, open: func(t *testing.T) *os.File {
-			if runtime.GOOS == "windows" {
-				t.Skip("named pipes not supported by this test on windows")
-			}
-			path := filepath.Join(t.TempDir(), "fifo")
-			if err := syscall.Mkfifo(path, 0600); err != nil {
-				t.Fatalf("failed to create named pipe: %v", err)
-			}
-			// O_RDWR avoids blocking on open: a FIFO opened only for reading
-			// (or only writing) blocks until a peer opens the other end.
-			f, err := os.OpenFile(path, os.O_RDWR, os.ModeNamedPipe)
-			if err != nil {
-				t.Fatalf("failed to open named pipe: %v", err)
-			}
-			return f
-		}},
+		"named pipe (FIFO)": {isTerm: false, open: openTestFIFO},
 		"controlling terminal (/dev/tty)": {isTerm: true, open: func(t *testing.T) *os.File {
 			f, err := os.OpenFile("/dev/tty", os.O_RDWR, 0)
 			if err != nil {
